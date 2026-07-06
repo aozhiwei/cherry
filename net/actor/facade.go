@@ -31,17 +31,31 @@ type (
 )
 
 type (
-	ITimer interface {
-		Add(d time.Duration, fn func(), async ...bool) uint64                   // 添加定时器,循环执行
-		AddOnce(d time.Duration, fn func(), async ...bool) uint64               // 添加定时器,执行一次
-		AddFixedHour(hour, minute, second int, fn func(), async ...bool) uint64 // 固定x小时x分x秒,循环执行
-		AddFixedMinute(minute, second int, fn func(), async ...bool) uint64     // 固定x分x秒,循环执行
-		AddSchedule(s ITimerSchedule, f func(), async ...bool) uint64           // 添加自定义调度
-		Remove(id uint64)                                                       // 移除定时器
-		RemoveAll()                                                             // 移除所有定时器
+	ITimerHandle interface {
+		Delete()
+		Reschedule(delay time.Duration)
+		Remain() time.Duration
+		Valid() bool
 	}
 
-	ITimerSchedule interface {
-		Next(time.Time) time.Time
+	ICronHandle interface {
+		Delete()
+		Remain() time.Duration
+		Valid() bool
+	}
+
+	ITimerGroup interface {
+		Add(delay time.Duration, fn func()) ITimerHandle
+		AddOnce(delay time.Duration, fn func()) ITimerHandle
+		Clear()
+	}
+
+	ITimer interface {
+		Add(delay time.Duration, fn func()) ITimerHandle
+		AddOnce(delay time.Duration, fn func()) ITimerHandle
+		AddFixedHour(hour, minute, second int, fn func()) ICronHandle
+		AddFixedMinute(minute, second int, fn func()) ICronHandle
+		NewGroup() ITimerGroup
+		RemoveAll()
 	}
 )

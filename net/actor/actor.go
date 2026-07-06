@@ -75,27 +75,19 @@ func (p *Actor) loop() bool {
 
 	select {
 	case <-p.localMail.C:
-		{
-			p.processLocal()
-		}
+		p.processLocal()
 	case <-p.remoteMail.C:
-		{
-			p.processRemote()
-		}
+		p.processRemote()
 	case <-p.event.C:
-		{
-			p.processEvent()
-		}
-	case <-p.timer.C:
-		{
-			p.processTimer()
-		}
+		p.processEvent()
+	case <-p.timer.C():
+		p.timer.Update()
 	case <-p.close:
-		{
-			p.state = StopState
-		}
+		p.state = StopState
+		return false
 	}
 
+	p.timer.SyncWeakup()
 	return false
 }
 
@@ -181,15 +173,6 @@ func (p *Actor) processEvent() {
 
 	p.lastAt = time.Now().UnixMilli()
 	p.event.invokeFunc(eventData)
-}
-
-func (p *Actor) processTimer() {
-	timerID := p.timer.Pop()
-	if timerID < 1 {
-		return
-	}
-
-	p.timer.invokeFunc(timerID)
 }
 
 func (p *Actor) invokeFunc(mb *mailbox, app cfacade.IApplication, fn cfacade.InvokeFunc, m *cfacade.Message) {
@@ -416,8 +399,8 @@ func newActor(actorID, childID string, handler cfacade.IActorHandler, c *System)
 	child := newChild(&thisActor)
 	thisActor.child = &child
 
-	timer := newTimer(&thisActor)
-	thisActor.timer = &timer
+	thisActor.timer = newTimer()
+
 
 	// spawn load!
 	actorLoad, ok := handler.(IActorLoader)
