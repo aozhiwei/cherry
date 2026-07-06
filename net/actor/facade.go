@@ -31,16 +31,39 @@ type (
 )
 
 type (
-	ITimer interface {
-		Add(d time.Duration, fn func(), async ...bool) uint64                   // 添加定时器,循环执行
-		AddOnce(d time.Duration, fn func(), async ...bool) uint64               // 添加定时器,执行一次
-		AddFixedHour(hour, minute, second int, fn func(), async ...bool) uint64 // 固定x小时x分x秒,循环执行
-		AddFixedMinute(minute, second int, fn func(), async ...bool) uint64     // 固定x分x秒,循环执行
-		AddSchedule(s ITimerSchedule, f func(), async ...bool) uint64           // 添加自定义调度
-		Remove(id uint64)                                                       // 移除定时器
-		RemoveAll()                                                             // 移除所有定时器
+	ICornHandle interface {
+		Delete()
+		Remain() time.Duration
+		Valid() bool
 	}
 
+	ITimerHandle interface {
+		ICornHandle
+		Reschedule(d time.Duration)
+	}
+
+	ITimerGroup interface {
+		After(d time.Duration, fn func()) ITimerHandle
+		Every(d time.Duration, fn func()) ITimerHandle
+		Hourly(minute, second int, fn func()) ICornHandle
+		Daily(hour, minute, second int, fn func()) ICornHandle
+		Clear()
+	}
+
+	ITimer interface {
+		ITimerGroup
+		Add(d time.Duration, fn func(), async ...bool) uint64                   // Deprecated: use After/Every instead.
+		AddOnce(d time.Duration, fn func(), async ...bool) uint64               // Deprecated: use After instead.
+		AddFixedHour(hour, minute, second int, fn func(), async ...bool) uint64 // Deprecated: use Daily instead.
+		AddFixedMinute(minute, second int, fn func(), async ...bool) uint64     // Deprecated: use Hourly instead.
+		AddSchedule(s ITimerSchedule, fn func(), async ...bool) uint64          // Deprecated.
+		Remove(id uint64)                                                       // Deprecated: use Handle.Delete() instead.
+		RemoveAll()                                                             // Deprecated: use Clear() instead.
+		NewGroup() ITimerGroup
+		WithOwnTimer() bool
+	}
+
+	// Deprecated
 	ITimerSchedule interface {
 		Next(time.Time) time.Time
 	}

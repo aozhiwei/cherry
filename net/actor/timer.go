@@ -3,13 +3,31 @@ package cherryActor
 import (
 	"time"
 
-	ctimeWheel "github.com/cherry-game/cherry/extend/time_wheel"
+	"github.com/cherry-game/cherry/extend/xtimer"
 )
 
-var (
-	globalTimer = ctimeWheel.NewTimeWheel(10*time.Millisecond, 3600)
-)
+var globalStartTime = time.Now()
+var globalTimer xtimer.WallTimer
+
+func getGlobalTick() int64 {
+	return time.Since(globalStartTime).Milliseconds()
+}
+
+func allocGlobalTimer() xtimer.WallTimer {
+	return globalTimer
+}
+
+func createOwnTimer() xtimer.WallTimer {
+	return xtimer.NewWallTimer(xtimer.NewCascadeWheel(), TickUnit, getGlobalTick)
+}
 
 func init() {
-	globalTimer.Start()
+	globalTimer = xtimer.NewSyncWallTimer(xtimer.NewCascadeWheel(), TickUnit, getGlobalTick)
+	sched := globalTimer.Schedule()
+	go func() {
+		for {
+			<-sched.C()
+			sched.Update()
+		}
+	}()
 }

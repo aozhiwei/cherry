@@ -86,9 +86,9 @@ func (p *Actor) loop() bool {
 		{
 			p.processEvent()
 		}
-	case <-p.timer.C:
+	case <-p.timer.C():
 		{
-			p.processTimer()
+			p.timer.processTimer()
 		}
 	case <-p.close:
 		{
@@ -181,15 +181,6 @@ func (p *Actor) processEvent() {
 
 	p.lastAt = time.Now().UnixMilli()
 	p.event.invokeFunc(eventData)
-}
-
-func (p *Actor) processTimer() {
-	timerID := p.timer.Pop()
-	if timerID < 1 {
-		return
-	}
-
-	p.timer.invokeFunc(timerID)
 }
 
 func (p *Actor) invokeFunc(mb *mailbox, app cfacade.IApplication, fn cfacade.InvokeFunc, m *cfacade.Message) {
@@ -416,8 +407,8 @@ func newActor(actorID, childID string, handler cfacade.IActorHandler, c *System)
 	child := newChild(&thisActor)
 	thisActor.child = &child
 
-	timer := newTimer(&thisActor)
-	thisActor.timer = &timer
+	timer := newActorTimer(&thisActor)
+	thisActor.timer = timer
 
 	// spawn load!
 	actorLoad, ok := handler.(IActorLoader)

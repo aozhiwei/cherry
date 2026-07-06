@@ -1,6 +1,8 @@
 package cherryActor
 
 import (
+	"time"
+
 	cerror "github.com/cherry-game/cherry/error"
 )
 
@@ -13,4 +15,9 @@ var (
 const (
 	LocalName  = "local"
 	RemoteName = "remote"
+)
+
+const (
+	TickUnit     = time.Millisecond
+	MaxSleepTick = 1024
 )
